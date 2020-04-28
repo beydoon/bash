@@ -8,16 +8,29 @@
 value1="$1"
 value2="$2"
 
+# This function uses exit status, which is fine until 255 then hell breaks
+# lose! So i've made another approach to this. Simply by taking the negative 
+# symbol using sed.
+#abs() {
+#	if [ "$1" -ge 0 ]; then
+#		absval=$1
+#	else
+#		let "absval = (( 0 - $1 ))"
+#	fi
+#
+#	return $absval
+#}
+
+
 abs() {
 	if [ "$1" -ge 0 ]; then
 		absval=$1
 	else
-		let "absval = (( 0 - $1 ))"
+		absval="$( echo $1 | sed 's/-//' )"
 	fi
 
 	return $absval
 }
-
 
 main() {
 	calculate="$(echo "$value1 - $value2" | bc)"
