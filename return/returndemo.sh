@@ -31,13 +31,14 @@ abs() {
 		absval="$( echo $1 | sed 's/-//' )"
 	fi
 
-	return $absval
+	echo $absval
 }
 
 main() {
 	calculate="$(echo "$value1 - $value2" | bc)"
-	abs $calculate
-	output=$?
+	#abs $calculate
+	#output=$?
+	output="$(abs $calculate)"
 
 	echo $output
 }
