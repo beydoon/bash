@@ -10,8 +10,8 @@ value2="$2"
 
 # This function uses exit status, which is fine until 255 then hell breaks
 # lose! Exit codes start from 0 to 255. So i've made another approach to this.
-# I've used sed to just simply take the negative simple out and return the
-# value as absolute.
+# I've used sed to just simply take the negative symbol out and return the
+# value as an absolute.
 
 #abs() {
 #	if [ "$1" -ge 0 ]; then
