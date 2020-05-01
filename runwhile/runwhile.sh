@@ -24,7 +24,7 @@ list() {
 main() {
 	list
 	while [[ "$list_rc" = 1 ]]; do
-		echo "The file does not exist yet."
+		echo "The file does not exist yet"
 		echo "going to try again in 10 seconds"
 		sleep $seconds
 		list
