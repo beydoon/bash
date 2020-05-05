@@ -14,11 +14,11 @@ printResult() {
 	fmt="%s SIN: %s"
 	sinfmt="${usersin:0:3}-${usersin:3:3}-${usersin:6:3}" 
 
-	if [ "${1,,}" == valid ]; then
+	if [ "${1,,}" == "valid" ]; then
 		printf "$fmt\n" "VALID" "$sinfmt" 
 	fi
 
-	if [ "${1,,}" == invalid ]; then
+	if [ "${1,,}" == "invalid" ]; then
 		printf "$fmt\n" "INVALID" "$sinfmt" 
 	fi
 }
@@ -26,7 +26,7 @@ printResult() {
 validate() {
 	value="$1"
 
-	if (( $finalsum % 10 )); then
+	if (( "$finalsum" % 10 )); then
 		printResult "INVALID"
 	else
 		printResult "VALID"
@@ -36,7 +36,7 @@ validate() {
 calculate() {
 	value="$1"
 
-	if (( $value >= 10 )); then
+	if (( "$value" >= 10 )); then
 		val1=${value:0:1}
 		val2=${value:1:1}
 		total=$(( $val1 + $val2 ))
@@ -49,10 +49,10 @@ calculate() {
 main() {
 	sinTotalLength=${#usersin}
 
-	while [ $sinTotalLength -gt $counter ]; do
+	while [ "$sinTotalLength" -gt "$counter" ]; do
 		value=${usersin:$counter:1}
 
-		if (( $counter % 2 )); then
+		if (( "$counter" % 2 )); then
 			y="$(( $value * 2 ))"
 			calculate "$y"
 		else
