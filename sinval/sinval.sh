@@ -11,14 +11,15 @@ counter=0
 finalsum=0
 
 printResult() {
-	fmt="%s is %s."
+	fmt="%s SIN: %s"
+	sinfmt="${usersin:0:3}-${usersin:3:3}-${usersin:6:3}" 
 
-	if [ "$1" == valid ]; then
-		printf "$fmt\n" "$usersin" "valid"
+	if [ "${1,,}" == valid ]; then
+		printf "$fmt\n" "VALID" "$sinfmt" 
 	fi
 
-	if [ "$1" == invalid ]; then
-		printf "$fmt\n" "$usersin" "invalid"
+	if [ "${1,,}" == invalid ]; then
+		printf "$fmt\n" "INVALID" "$sinfmt" 
 	fi
 }
 
@@ -26,9 +27,9 @@ validate() {
 	value="$1"
 
 	if (( $finalsum % 10 )); then
-		printResult "invalid"
+		printResult "INVALID"
 	else
-		printResult "valid"
+		printResult "VALID"
 	fi
 }
 
