@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # sinval
 # This script validates canadian social insurance number
-# version 1.0.0
+# version 1.0.4
 # Bedouin Technologies (c) Copyright 2020 *GPL*
 # 20200503
 #set -x
@@ -9,6 +9,23 @@
 usersin="$1"
 counter=0
 finalsum=0
+
+usage() {
+	cat <<EOF
+Usage: $0 nnnnnnnnn
+
+	Provide a total of 9 numbers without spaces or dashs; n represents number as example.
+EOF
+exit 1
+}
+
+validateinput() {
+	value=$1
+
+	if [[ $value < 9 ]]; then
+		usage
+	fi
+}
 
 printResult() {
 	fmt="%s SIN: %s"
@@ -48,6 +65,7 @@ calculate() {
 
 main() {
 	sinTotalLength=${#usersin}
+	validateinput "$sinTotalLength"
 
 	while [ "$sinTotalLength" -gt "$counter" ]; do
 		value=${usersin:$counter:1}
