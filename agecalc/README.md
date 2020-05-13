@@ -6,7 +6,7 @@ This is a quick demo script to do the following:
 * output to the screen
 * If no input is given then then there is a default output
 
-## HOW TO RUN THE SCRIPT
+## Usage
 
 ```
 ./agecalculator.sh
