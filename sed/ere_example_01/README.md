@@ -7,14 +7,12 @@ specific location on a line. This script will do the following:
 * if digits 4 and 9 are found together then replace 4 and 9 with 5 and 8
 
 file1.log:
-```
 10001340100**49**1938001945591
 10001340100**49**1951002049591
 10001340100462055002108507
 10001340100**49**2124002135591
 10001340100**49**2145002156507
 10001340100472204002205591
-```
 
 ## HOW TO RUN THE SCRIPT
 
