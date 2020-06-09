@@ -3,7 +3,7 @@
 
 This demonstration shows you how to:
 * find specific characters (**49**) after 11th position
-* replace the specific characters after 11th position with **59**
+* replace the specific characters after 11th position with **58**
 
 file1.log:
 ```
