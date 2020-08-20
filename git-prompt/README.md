@@ -1,5 +1,7 @@
 # Git Prompt
 
+This is a simple git prompt.
+
 Files required
 * .git-prompt
 * .bashrc
