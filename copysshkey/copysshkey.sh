@@ -18,50 +18,57 @@ OSSHKEY=""
 AUTHKEYFILE="~/.ssh/authorized_keys"
 
 displaymsg() {
-    server="$1"
-    etype="$2"
+  server="$1"
+  mtype="$2"
 
-    fmt0="%s\t--> connection timed out..."
-    fmt1="%s\t--> copy success"
-    fmt2="%s\t--> copy failed... revert success"
-    fmt3="%s\t--> copy failed... revert failed"
-    fmt4="%s\t--> copied new sshkey but can\'t log in with it..."
-    fmt5="%s\t--> connection test success"
+  fmt0="%s\t--> connection timed out..."
+  fmt1="%s\t--> copy success"
+  fmt2="%s\t--> copy failed... revert success"
+  fmt3="%s\t--> copy failed... revert failed"
+  fmt4="%s\t--> copied new sshkey but can\'t log in with it..."
+  fmt5="%s\t--> connection test success"
 
-    # etype :
-    # ct  == connection timed-out
-    # tct == test connection time out
-    # cts == connection test success
-    # cs  == copy success
-    # rs  == revert success
-    # rf  == revert failed
+  # mtype : (message type)
+  # ct  == connection timed-out
+  # tct == test connection time out
+  # cts == connection test success
+  # cs  == copy success
+  # rs  == revert success
+  # rf  == revert failed
 
-    case ${etype,,} in
-      "ct"  ) shift; printf "$fmt0" "$server";;
-      "tct" ) shift; printf "$fmt4" "$server";;
-      "cs"  ) shift; printf "$fmt1" "$server";;
-      "rs"  ) shift; printf "$fmt2" "$server";;
-      "rf"  ) shift; printf "$fmt2" "$server";;
-      "cts" ) shift; printf "$fmt5" "$server";;
-           *) shift; echo "Error : ${etype,,} no such command..."; break;
-    esac
+  case ${mtype,,} in
+    "ct"  ) shift; printf "$fmt0" "$server";;
+    "tct" ) shift; printf "$fmt4" "$server";;
+    "cs"  ) shift; printf "$fmt1" "$server";;
+    "rs"  ) shift; printf "$fmt2" "$server";;
+    "rf"  ) shift; printf "$fmt2" "$server";;
+    "cts" ) shift; printf "$fmt5" "$server";;
+         *) shift; echo "Error : ${mtype,,} no such command..."; break;
+  esac
 }
 
-checkAccessToServer() [
-  status="$(ssh -o ConnectTimeout=10 $USER@$1 "echo" >/dev/null 2&>1; echo $?)"
+checkAccessToServer() {
+  server="$1"
+  status="$(ssh -o ConnectTimeout=10 $USER@$server "echo" >/dev/null 2&>1; echo $?)"
+  if [[ "$status" == "0" ]]; then
+    OSSHKEY="$(ssh $USER@$server \"cat ~/.ssh/id_rsa.pub\")"
+  fi
   echo $status
 }
 
 backupRemoteAuthKeyFile() {
-    ssh $USER@$1 "cp $AUTHKEYFILE $AUTHKEYFILE.bkp"
+  server="$1"
+  ssh "$USER@$server" "cp $AUTHKEYFILE $AUTHKEYFILE.bkp"
 }
 
 revertRemoteAuthKeyFile() {
-    ssh $USER@$1 "mv $AUTHKEYFILE.bkp $AUTHKEYFILE"
+  server="$1"
+  ssh "$USER@$server" "mv $AUTHKEYFILE.bkp $AUTHKEYFILE"
 }
 
 copyNewSshKey() {
-    ssh-copy-id -i "$NSSHPUBKEY" "$USER@$1"
+  server="$1"
+  ssh-copy-id -i "$NSSHKEYFILE" "$USER@$server"
 }
 
 run() {
@@ -84,9 +91,9 @@ run() {
           if [[ "$check" == 0 ]]; then
             displaymsg "$server" "cs"
             # remove old ssh key
-            ssh -i $NSSHKEYFILE $SERVER "sed -i '/$OSSHKEY/d' ~/.ssh/authorized_key'" # DO ANOTHER TEST AFTER THIS IF WE CAN ACCESS
+            ssh -i $NSSHKEYFILE $SERVER "sed -i \"/$OSSHKEY/d\" ~/.ssh/authorized_key'"
             # TEST NSSHKEY ACCESS
-            status="$(ssh -i $NSSHKEYFILE -o ConnectTimeout=10 $USER@$1 "echo" >/dev/null 2&>1; echo $?)"
+            status="$(ssh -i $NSSHKEYFILE -o ConnectTimeout=10 $USER@$SERVER \"echo\" >/dev/null 2&>1; echo $?)"
             if [[ "$status" != 0 ]]; then
               displaymsg "$SERVER" "tct"
             else
