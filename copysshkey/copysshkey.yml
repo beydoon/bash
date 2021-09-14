@@ -1,0 +1,27 @@
+---
+- hosts: all
+  become: true
+  become_user: root
+  tasks:
+  - name: backing up existing authorized_keys file on {{ inventory_hostname }}
+    copy:
+      src: .ssh/authorized_keys
+      dest: .ssh/authorized_keys.bak
+      remote_src: yes
+  - name: copying new sshkey to {{ inventory_hostname }}
+    authorized_key:
+      user: ansible
+      state: present
+      key: "{{ lookup('file', '.ssh/newtemp/id_rsa.pub') }}"
+  - name: confirming new sshkey works on {{ inventory_hostname }}
+    local_action: shell ssh -o StrictHostKeyChecking=no -i .ssh/newtemp/id_rsa ansible@{{ inventory_hostname }}
+    register: test_connection
+    ignore_errors: yes
+  - name: removing old sshkey from authorized_keys file
+    authorized_key:
+      user: ansible
+      state: absent
+      key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+  - name: confirming again if the new sshkey works on {{ inventory_hostname }}
+    local_action: shell ssh -i .ssh/newtemp/id_rsa ansible@{{ inventory_hostname }}
+    ignore_errors: yes
