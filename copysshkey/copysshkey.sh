@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 # copysshkey.sh
 # Copy new ssh key to the server
 # Test new ssh key on the server
@@ -6,13 +7,19 @@
 # If test fails, revert old key back
 #
 # To use the script
-#                                                     NEW KEY
-# ./copysshkey [USERID] [/path/to/list/of/serverfile] [/path/to/new/ssh/pub/key/file]
+#                                                      OLD KEY                        NEW KEY
+# ./copysshkey [USERID] [/path/to/list/of/serverfile] [/path/to/old/ssh/pub/key/file][/path/to/new/ssh/pub/key/file]
 # NOTE/WARNING: BE VERY CAREFULL OF HOW YOU PUT THE ARGUMENTS: THERE IS NO VALIDATION!
+# 
+# Please make sure you backup the existing ~/.ssh/id_rsa && ~/.ssh/id_rsa.pub 
+# before generating new keys
 
 USERID="$1"
 SERVERFILE="$2"
-NSSHKEYFILE="$3"
+OLDSSHKEYFILE="$3"
+NEWSSHPRIVKEYFILE="$4"
+NEWSSHPUBKEYFILE="$NEWSSHPRIVKEYFILE.pub"
+NEWSSHPUBKEY="$(cat $NEWSSHPUBKEYFILE)"
 
 OSSHKEY=""
 AUTHKEYFILE="~/.ssh/authorized_keys"
@@ -21,12 +28,12 @@ displaymsg() {
   server="$1"
   mtype="$2"
 
-  fmt0="%s\t--> connection timed out..."
-  fmt1="%s\t--> copy success"
-  fmt2="%s\t--> copy failed... revert success"
-  fmt3="%s\t--> copy failed... revert failed"
-  fmt4="%s\t--> copied new sshkey but can\'t log in with it..."
-  fmt5="%s\t--> connection test success"
+  fmt0="%s\t--> connection timed out...\n"
+  fmt1="%s\t--> copy success\n"
+  fmt2="%s\t--> copy failed... revert success\n"
+  fmt3="%s\t--> copy failed... revert failed\n"
+  fmt4="%s\t--> copied new sshkey but can\'t log in with it...\n"
+  fmt5="%s\t--> connection test success\n"
 
   # mtype : (message type)
   # ct  == connection timed-out
@@ -51,14 +58,14 @@ checkAccessToServer() {
   server="$1"
   status="$(ssh -o ConnectTimeout=10 $USER@$server "echo" >/dev/null 2&>1; echo $?)"
   if [[ "$status" == "0" ]]; then
-    OSSHKEY="$(ssh $USER@$server \"cat ~/.ssh/id_rsa.pub\")"
+    OSSHKEY="$(ssh $USER@$server 'cat ~/.ssh/authorized_keys | tail -1' )"
   fi
   echo $status
 }
 
 backupRemoteAuthKeyFile() {
   server="$1"
-  ssh "$USER@$server" "cp $AUTHKEYFILE $AUTHKEYFILE.bkp"
+  ssh $USER@$server "cp $AUTHKEYFILE $AUTHKEYFILE.bak"
 }
 
 revertRemoteAuthKeyFile() {
@@ -68,17 +75,18 @@ revertRemoteAuthKeyFile() {
 
 copyNewSshKey() {
   server="$1"
-  ssh-copy-id -i "$NSSHKEYFILE" "$USER@$server"
+  #ssh-copy-id -i "$NSSHKEYFILE" "$USER@$server"
+  ssh $USER@$server "echo $NEWSSHPUBKEY >> ~/.ssh/authorized_keys"
 }
 
 run() {
     # LOOP THRU THE SERVER LIST
     for SERVER in $(cat $SERVERFILE); do
       # CHECK IF SERVER IS TIMING OUT OR NOT
-      if [ "$(checkAccessToServer $SERVER)" == 0 ]; then
-        
+      check="$(checkAccessToServer $SERVER)"
+      if [[ $check == 0 ]]; then
         # CHECK IF OLD SSHKEY IS THE SAME AS THE NEW SSH KEY
-        if [[ "$OSSHKEY" != "$(cat $NSSHKEYFILE)" ]]; then
+        if [[ "$OSSHKEY" != "$NEWSSHPUBKEY" ]]; then
           # backup authorized_keys file
           backupRemoteAuthKeyFile $SERVER
 
@@ -86,14 +94,19 @@ run() {
           copyNewSshKey $SERVER
 
           # test if the new key works
-          check="$(ssh -i $NSSHKEYFILE $USER@$SERVER "echo" >/dev/null 2&>1; echo $?)"
+          check="$(ssh -i $NEWSSHPRIVKEYFILE $USER@$SERVER "echo" >/dev/null 2&>1; echo $?)"
           
           if [[ "$check" == 0 ]]; then
             displaymsg "$server" "cs"
+
             # remove old ssh key
-            ssh -i $NSSHKEYFILE $SERVER "sed -i \"/$OSSHKEY/d\" ~/.ssh/authorized_key'"
+            cmd="sed -i '\|$OSSHKEY|d' ~/.ssh/authorized_keys"
+            ssh -t -i $NEWSSHPRIVKEYFILE $USER@$SERVER "$cmd"
+            #ssh -i $NEWSSHPRIVKEYFILE $USER@$SERVER "grep -v \"$OSSHKEY\" ~/.ssh/authorized_keys >~/.ssh/authorized_keys"
+
             # TEST NSSHKEY ACCESS
-            status="$(ssh -i $NSSHKEYFILE -o ConnectTimeout=10 $USER@$SERVER \"echo\" >/dev/null 2&>1; echo $?)"
+            status="$(ssh -i $NEWSSHPRIVKEYFILE -o ConnectTimeout=10 $USER@$SERVER "echo" >/dev/null 2&>1; echo $?)"
+
             if [[ "$status" != 0 ]]; then
               displaymsg "$SERVER" "tct"
             else
@@ -101,7 +114,8 @@ run() {
             fi
           else
             # if copy fails then revert the changes
-            revert="$(ssh $SERVER 'cat ~/.ssh/authorized_keys.bk > ~/.ssh/authorized_keys')"
+            revert="$(ssh -i $OLDSSHKEYFILE $USER@$SERVER "cat ~/.ssh/authorized_keys.bak > ~/.ssh/authorized_keys" ; echo $?)"
+
             if [[ "$revert" == 0 ]]; then
               displaymsg "$server" "rs"
             else
@@ -111,12 +125,13 @@ run() {
           fi
         else
           displaymsg "$SERVER" "ct"
-        fi        
+        fi 
+      fi       
     done
 }
 
-main() { 
-    run
+main() {
+  run
 }
 
 main
