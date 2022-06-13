@@ -6,20 +6,16 @@
 # 20220610
 # set -x
 
-# This example will take results from your input and randomly tell you what you
-# should eat today
+# In this example: 
+#   - choices are put in array
+#   - get the total number of choices and randomize it
+#   - display the results
 
-# initialize array
-choices=()
-
-# ask user for the choices
-read -p "[E]nter choices delimited by spaces: " choices
-
-# get total number of choices
-x=${#choices[@]}
+# initialize array and ask user for the choices
+choices=("Beef Burger" "Chicken Burger" "French Fries" "Chicken Nuggets" "Fish burger")
 
 # Randomize the numbers upto $x
-y=$(( RANDOM % $x ))
+getFoodIndex=$(( RANDOM % ${#choices[@]} ))
 
 # Let user know what to eat
-echo "You should ${choice[$y] today!"
+echo "You should definately eat ${choices[getFoodIndex]} today!!!"
