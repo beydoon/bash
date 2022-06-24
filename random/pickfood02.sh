@@ -11,20 +11,27 @@
 #   - get the total number of choices and randomize it
 #   - display the results
 
-# initialize array and ask user for the choices
-choices=()
+# set initial variables
+answer="yes"
+count=0
 
-# Ask user for a list of food
-echo "List of food you would like to eat (double quote your choices)"
-read -p "[E]nter choices: " userinput
-
-IFS=$'"'
-for value in ${userinput}; do
-  echo "-> $value"
+# Enter list of food or resturants you would like to eat or go to
+IFS=$'\n'
+while [ "${answer,,}" == "y" ] || [ "${answer,,}" == "yes" ]; do
+  read -p "[E]nter food or resturant: " input
+  options+=("$input")
+  echo ""
+  read -p "[E]nter another option? [y|n] " answer
 done
 
-# Randomize the numbers upto $x
-getFoodIndex=$(( RANDOM % ${#choices[@]} ))
+# Show what you entered
+for x in ${options[@]}; do
+  ((++count))
+  printf "[%s] YOU ENTERED -> %s\n" "$count" "$x"
+done
+
+# Randomize the food choice to pick
+getRandomFoodIndex=$(( RANDOM % ${#options[@]} ))
 
 # Let user know what to eat
-echo "You should definately eat ${choices[getFoodIndex]} today!!!"
+printf "You should definately eat \"%s\" today.\n" "$(echo ${options[getRandomFoodIndex]})"
